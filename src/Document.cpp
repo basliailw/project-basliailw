@@ -1,4 +1,8 @@
 #include "Document.hpp"
+#include <cstddef>
+#include <string>
+#include <fstream>
+#include <iostream>
 
 Document::Document(std::string title, std::string contents) {
     // TODO: implement according to the M1 specification.
