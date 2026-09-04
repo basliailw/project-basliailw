@@ -8,8 +8,9 @@ Document::Document(std::string title, std::string contents) {
 
 bool Document::operator==(const Document& other) const {
     // TODO
-    return title_    == other.title_ &&
-           contents_ == other.contents_;
+    return title_      == other.title_ &&
+           contents_   == other.contents_ &&
+           sourcePath_ == other.sourcePath_;
 }
 
 bool Document::operator!=(const Document& other) const {

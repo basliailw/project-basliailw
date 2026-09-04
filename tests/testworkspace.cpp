@@ -34,15 +34,20 @@ void document_test() {
     Document different("Other", "Some contents.");
     assert(doc != different);
 
+    std::ofstream out("sample.txt");
+    out << "Hello\nWorld\n";
+    out.close();
+
     Document loaded;
-    bool ok = loaded.load("text/sample.txt");
+    bool ok = loaded.load("sample.txt");
     assert(ok);
-    assert(loaded.sourcePath() == "text/sample.txt");
+    assert(loaded.sourcePath() == "sample.txt");
     assert(loaded.title() == "sample.txt");
+    assert(loaded.contents() == "Hello\nWorld\n");
     assert(loaded.characterCount() == loaded.contents().size());
     assert(!loaded.empty());
 
-    bool failed = doc.load("does_not_exist_12345.txt");
+    bool failed = doc.load("Lakers2027.txt");
     assert(!failed);
     assert(doc.title() == "Title");
     assert(doc.contents() == "Some contents.");
