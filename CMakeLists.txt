@@ -22,5 +22,11 @@ add_executable(public_tests tests/public_tests.cpp)
 target_link_libraries(public_tests PRIVATE aiws_m1)
 target_compile_options(public_tests PRIVATE -Wall -Wextra -Wpedantic)
 
+add_executable(student_tests tests/tests.cpp)
+target_link_libraries(student_tests PRIVATE aiws_m1)
+target_include_directories(student_tests PRIVATE tests)
+target_compile_options(student_tests PRIVATE -Wall -Wextra -Wpedantic)
+
 enable_testing()
 add_test(NAME public_tests COMMAND public_tests)
+add_test(NAME student_tests COMMAND student_tests)

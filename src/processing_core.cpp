@@ -30,7 +30,7 @@ ProcessingCore::ProcessingCore(ProcessingCore&&) noexcept = default;
 
 ProcessingCore& ProcessingCore::operator=(ProcessingCore&&) noexcept = default;
 
-std::string ProcessingCore::normalize(const std::string&) {
+std::string ProcessingCore::normalize(const std::string& text) {
     // TODO: return the normalized form of the input text.
     return TextProcessor::normalize(text);
 }
@@ -65,7 +65,7 @@ std::size_t ProcessingCore::chunk_count() const noexcept {
     return impl_->chunks.size();
 }
 
-std::size_t ProcessingCore::document_frequency(const std::string&) const {
+std::size_t ProcessingCore::document_frequency(const std::string& term) const {
     // TODO: return the document frequency for the requested term.
     const std::vector<std::string> tokens = TextProcessor::terms(term);
     if (tokens.empty())

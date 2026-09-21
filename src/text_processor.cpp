@@ -6,7 +6,7 @@ namespace {
 bool is_token_char(unsigned char c) {
     return (c >= 'a' && c <= 'z') ||
            (c >= 'A' && c <= 'Z') ||
-           (c >- '0' && c <= '9');
+           (c >= '0' && c <= '9');
 }
 
 char to_lower_ascii(unsigned char c) {
