@@ -1,9 +1,4 @@
 #include "aiws/processing_core.hpp"
-#include "aiws/chunker.hpp"
-#include "aiws/context_builder.hpp"
-#include "aiws/corpus_index.hpp"
-#include "aiws/retrieval_engine.hpp"
-#include "aiws/text_processor.hpp"
 
 #include <stdexcept>
 #include <unordered_set>
@@ -13,6 +8,8 @@ namespace aiws {
 
 struct ProcessingCore::Impl {
     // TODO: define the internal state used by the processing core.
+
+    /*
     Chunker chunker{ChunkingPolicy{ProcessingCore::kMaxChunkTokens,
                                    ProcessingCore::kChunkOverlap,
                                    ProcessingCore::kParagraphPreferenceWindow}};
@@ -20,9 +17,32 @@ struct ProcessingCore::Impl {
     ContextBuilder context_builder;
     std::vector<Chunk> chunks;
     CorpusIndex index;
+    */
+
+    std::unique_ptr<ChunkingStrategy>  chunking;
+    std::unique_ptr<RetrievalStrategy> retrieval;
+    std::unique_ptr<ContextStrategy>   context;
+    std::vector<Chunk> chunks;
+    CorpusIndex index;
 };
 
-ProcessingCore::ProcessingCore() : impl_(std::make_unique<Impl>()) { }
+ProcessingCore::ProcessingCore()
+    : ProcessingCore(std::make_unique<Chunker>(ChunkingPolicy{kMaxChunkTokens,
+                                                              kChunkOverlap,
+                                                              kParagraphPreferenceWindow}),
+                                                  std::make_unique<RetrievalEngine>(),
+                                                  std::make_unique<ContextBuilder>()) {}
+
+ProcessingCore::ProcessingCore(std::unique_ptr<ChunkingStrategy> chunking,
+                               std::unique_ptr<RetrievalStrategy> retrieval,
+                               std::unique_ptr<ContextStrategy> context) {
+    if (!chunking || !retrieval || !context)
+        throw std::invalid_argument("ProcessingCore: strategy must not be null");
+    impl_ = std::make_unique<Impl>();
+    impl_->chunking  = std::move(chunking);
+    impl_->retrieval = std::move(retrieval);
+    impl_->context   = std::move(context);
+}
 
 ProcessingCore::~ProcessingCore() = default;
 
@@ -45,7 +65,7 @@ void ProcessingCore::rebuild(const Workspace& workspace) {
     std::vector<Chunk> new_chunks;
     for (std::size_t order = 0; order < documents.size(); ++order) {
         std::vector<Chunk> doc_chunks =
-            impl_->chunker.chunk(documents[order], order);
+            impl_->chunking->chunk(documents[order], order);
         for (Chunk& c : doc_chunks)
             new_chunks.push_back(std::move(c));
     }
@@ -88,7 +108,7 @@ std::size_t ProcessingCore::term_frequency(const std::string& term,
 
 std::vector<SearchResult> ProcessingCore::search(const std::string& query, int k) const {
     // TODO: return the ranked results for the requested query.
-    return impl_->retrieval.search(query, k, impl_->chunks, impl_->index);
+    return impl_->retrieval->search(query, k, impl_->chunks, impl_->index);
 }
 
 std::vector<ContextItem> ProcessingCore::build_context(const std::string& query,
@@ -96,7 +116,7 @@ std::vector<ContextItem> ProcessingCore::build_context(const std::string& query,
                                                        std::size_t token_budget) const {
     // TODO: build bounded context for the requested query.
     const std::vector<SearchResult> ranked = search(query, k);
-    return impl_->context_builder.build(ranked, token_budget);
+    return impl_->context->build(ranked, token_budget);
 }
 
 }  // namespace aiws

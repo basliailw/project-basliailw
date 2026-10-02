@@ -1,5 +1,5 @@
 #define CATCH_CONFIG_MAIN
-#include "catch.hpp"
+#include "../catch.hpp"
 
 #include "aiws/chunker.hpp"
 #include "aiws/context_builder.hpp"
@@ -15,12 +15,27 @@
 
 using namespace aiws;
 
+// M1
 static std::string words(int n) {
     std::string s;
     for (int i = 0 ; i < n ; i++) { if (i) s += ' '; s += "w" + std::to_string(i); }
     return s;
 }
 
+// M2
+class MarkerChunking : public ChunkingStrategy {
+public:
+    std::vector<Chunk> chunk(const Document& doc, std::size_t order) const override {
+        return {Chunk{doc.id() + "#m", doc.id(), order, 0, "marker", 1, 0, 0}};
+    }
+};
+static ProcessingCore marker_core() {
+    return ProcessingCore(std::make_unique<MarkerChunking>(),
+                          std::make_unique<RetrievalEngine>(),
+                          std::make_unique<ContextBuilder>());
+}
+
+// M1
 TEST_CASE("Text normalization", "[text_processor]") {
     REQUIRE(TextProcessor::normalize("Hello,  WORLD! 2026") == "hello world 2026");
     REQUIRE(TextProcessor::normalize("R2-D2") == "r2 d2");
@@ -188,4 +203,54 @@ TEST_CASE("End-to-end multi-document flow", "[integration]") {
     for (std::size_t i = 0 ; i < ctx.size() ; i++)
         REQUIRE(ctx[i].chunk_id == results[i].chunk_id);
     REQUIRE(core.search("unrelated", 10).empty());
+}
+
+// M2
+TEST_CASE("M2: injected strategy is used instead of the default", "[m2]") {
+    Workspace ws;
+    ws.add_document(Document{"d1", "", "alpha beta"});
+    ws.add_document(Document{"d2", "", "gamma"});
+    ProcessingCore core = marker_core();
+    core.rebuild(ws);
+    REQUIRE(core.chunk_count() == 2);
+    REQUIRE(core.chunks()[0].id == "d1#m");
+    REQUIRE(core.search("marker", 10).size() == 2);
+    REQUIRE(core.search("alpha", 10).empty());
+}
+
+TEST_CASE("M2: null strategies are rejected", "[m2]") {
+    REQUIRE_THROWS_AS(ProcessingCore(nullptr,
+                                     std::make_unique<RetrievalEngine>(),
+                                     std::make_unique<ContextBuilder>()),
+                                     std::invalid_argument);
+    REQUIRE_THROWS_AS(ProcessingCore(std::make_unique<Chunker>(), nullptr,
+                                     std::make_unique<ContextBuilder>()),
+                                     std::invalid_argument);
+    REQUIRE_THROWS_AS(ProcessingCore(std::make_unique<Chunker>(),
+                                     std::make_unique<RetrievalEngine>(), nullptr),
+                                     std::invalid_argument);
+}
+
+TEST_CASE("M2: ProcessingCore is move-only and moves keep the strategy", "[m2]") {
+    static_assert(!std::is_copy_constructible<ProcessingCore>::value, "no copy");
+    static_assert(std::is_move_constructible<ProcessingCore>::value, "movable");
+    Workspace ws;
+    ws.add_document(Document{"d1", "", "alpha"});
+    ProcessingCore source = marker_core();
+    ProcessingCore moved(std::move(source));
+    moved.rebuild(ws);
+    REQUIRE(moved.chunks()[0].id == "d1#m");
+}
+
+TEST_CASE("M2: failed rebuild keeps corpus under a custom strategy", "[m2]") {
+    Workspace good;
+    good.add_document(Document{"d1", "", "alpha"});
+    ProcessingCore core = marker_core();
+    core.rebuild(good);
+    Workspace dup;
+    dup.add_document(Document{"x", "", "one"});
+    dup.add_document(Document{"x", "", "two"});
+    REQUIRE_THROWS_AS(core.rebuild(dup), std::invalid_argument);
+    REQUIRE(core.chunk_count() == 1);
+    REQUIRE(core.build_context("marker", 5, 10)[0].chunk_id == "d1#m");
 }
