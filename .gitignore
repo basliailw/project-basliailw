@@ -1,8 +1,0 @@
-build/
-gradescope_build/
-*.txt~
-reference_load.txt
-text/
-include/
-Dockerfile
-README.md
