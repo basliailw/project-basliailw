@@ -1,4 +1,4 @@
-#include "Message.hpp"
+#include "aiws/message.hpp"
 
 Message::Message(MessageRole role, std::string text) {
     // TODO: implement according to the M1 specification.
