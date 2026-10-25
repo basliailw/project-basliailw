@@ -1,15 +1,10 @@
 #pragma once
 
-#include "aiws/corpus_index.hpp"
-#include "aiws/processing_types.hpp"
 #include "aiws/retrieval_strategy.hpp"
-
-#include <string>
-#include <vector>
 
 namespace aiws {
 
-class RetrievalEngine : public RetrievalStrategy {
+class RetrievalEngine final : public RetrievalStrategy {
 public:
     std::vector<SearchResult> search(const std::string& query,
                                      int k,

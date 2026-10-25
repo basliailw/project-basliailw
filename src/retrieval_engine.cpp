@@ -93,4 +93,3 @@ std::vector<SearchResult> RetrievalEngine::search(const std::string& query,
 }
 
 }  // namespace aiws
-

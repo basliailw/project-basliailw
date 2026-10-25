@@ -1,11 +1,8 @@
 #pragma once
 
-#include "aiws/document.hpp"
-#include "aiws/processing_types.hpp"
 #include "aiws/chunking_strategy.hpp"
 
 #include <cstddef>
-#include <vector>
 
 namespace aiws {
 
@@ -15,7 +12,7 @@ struct ChunkingPolicy {
     std::size_t paragraph_window{20};
 };
 
-class Chunker : public ChunkingStrategy {
+class Chunker final : public ChunkingStrategy {
 public:
     explicit Chunker(ChunkingPolicy policy = {});
     std::vector<Chunk> chunk(const Document& document,
