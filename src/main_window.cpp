@@ -12,6 +12,8 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QVBoxLayout>
+#include <memory>
+#include <utility>
 
 namespace aiws::gui {
 
@@ -70,35 +72,92 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     update_action_states();
 }
 
+// m4 addition: stop and join the build thread while MainWindow is still fully alive
+MainWindow::~MainWindow() {
+    build_worker_.cancel();
+    build_worker_.finish();
+}
+
 void MainWindow::set_exit_callback(ExitCallback callback) noexcept {
     // TODO
     exit_callback_ = callback;
 }
 
+// m4 addition: stores the per-document build delay (negatives are treated as 0)
+void MainWindow::set_build_delay_ms(int ms_per_document) {
+    if (ms_per_document < 0) ms_per_document = 0;
+    build_delay_ms_ = ms_per_document;
+}
+
+// m4 edit: the dialog now just hands teh path to add_document_file()
 void MainWindow::add_document() {
     // TODO
-    QString path = QFileDialog::getOpenFileName(this, "Add Document", "",
-                                                "Text files (*.txt);;All files (*)");
-    if (path.isEmpty()) return;
-    QFile file(path);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        status_label_->setText("Current status: Could not open file.");
+    QString path = QFileDialog::getOpenFileName(this, "Add Document", "", "Text files (*.txt);;All files (*)");
+    if (path.isEmpty())
         return;
-    }
+    if (!add_document_file(path))
+        status_label_->setText("Current status: Could not open file.");
+}
+
+// m4 addition: the old "add_document()" got moved here
+bool MainWindow::add_document_file(const QString& path) {
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return false; // m4 change: was setText + return
     QString text = QString::fromUtf8(file.readAll());
     QFileInfo info(path);
     QString id = info.completeBaseName();
     QString title = info.fileName();
     workspace_.add_document(Document(id.toStdString(), title.toStdString(), text.toStdString()));
+
+    // m4 addition:
+    workspace_version_++; // any running build becomes stale
+    build_worker_.cancel(); // sikp remaining delay
+
     invalidate_corpus();
     workspace_widget_->add_document(title);
     workspace_widget_->select_document(static_cast<int>(workspace_.documents().size()) - 1);
     status_label_->setText("Current status: Added " + title);
+    return true;
 }
 
 void MainWindow::build_corpus() {
     // TODO
-    processing_core_.rebuild(workspace_);
+    // m4 edit: no more rebuild() on the GUI thread. build runs on worker's thread,
+    // build_finished() gets called back on the GUI thread when it ends
+    if (!build_worker_.start(workspace_, build_delay_ms_, this, "build_finished"))
+        return; // a build is already running
+    build_version_ = workspace_version_; // remember which Workspace this build is for
+    workspace_widget_->set_corpus_status("Building...");
+    status_label_->setText("Current status: Building corpus...");
+    update_action_states();
+}
+
+// m4 addition: runs on the GUI thread (queued) once the build thread is done
+void MainWindow::build_finished() {
+    // thread  did its work and is only returning, so this join doesn't make the GUI wait on a build
+    build_worker_.finish();
+
+    bool stale = (build_version_ != workspace_version_);
+#ifdef AIWS_FAULT_ACCEPT_STALE
+    stale = false; // fault... keep stale results anyway
+#endif
+    if (stale) {
+        // throw it away, failure or not. The Add or Reset that made it stale
+        // already set the right corpus state, so leave that alone
+        update_action_states();
+        return;
+    }
+
+    if (!build_worker_.succeeded()) {
+        workspace_widget_->set_corpus_status("Not built");
+        status_label_->setText("Current status: Build failed: " + QString::fromStdString(build_worker_.error()));
+        update_action_states();
+        return;
+    }
+
+    std::unique_ptr<ProcessingCore> core = build_worker_.take_result();
+    processing_core_ = std::move(*core); // the old corpus is destroyed here
     corpus_current_ = true;
     clear_processing_outputs();
     workspace_widget_->set_corpus_status("Built (" + QString::number(processing_core_.chunk_count()) + " chunks)");
@@ -168,6 +227,11 @@ void MainWindow::term_inspection_requested(const QString& term,
 void MainWindow::reset_application() {
     // TODO
     workspace_.clear();
+
+    // m4 addition:
+    workspace_version_++; // any running build becomes stale
+    build_worker_.cancel(); // skip remaining delay
+
     corpus_current_ = false;
     Resettable* parts[] = {workspace_widget_, search_widget_, term_inspector_widget_, context_widget_};
     for (Resettable* part : parts) part->reset();
@@ -184,6 +248,9 @@ void MainWindow::update_action_states() {
     // TODO
     bool has_documents = !workspace_.documents().empty();
     bool has_query = search_widget_->has_query();
+
+    bool building = build_worker_.is_running(); // m4 addition: no second build while one is running
+
     workspace_widget_->set_build_corpus_enabled(has_documents && !corpus_current_);
     search_widget_->set_search_enabled(corpus_current_ && has_query);
     term_inspector_widget_->set_inspection_enabled(corpus_current_);
