@@ -76,6 +76,18 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 MainWindow::~MainWindow() {
     build_worker_.cancel();
     build_worker_.finish();
+    ipc_server_.stop();
+}
+
+// m4 addition: start listening for aiws_send requests
+bool MainWindow::start_ipc_server(const QString& socket_path) {
+    return ipc_server_.start(socket_path.toStdString(), this, "remote_add_requested");
+}
+
+// m4 addition: a remote add does exactly what Add Document does
+void MainWindow::remote_add_requested(const QString& path) {
+    if (!add_document_file(path))
+        status_label_->setText("Current status: Could not open file.");
 }
 
 void MainWindow::set_exit_callback(ExitCallback callback) noexcept {
