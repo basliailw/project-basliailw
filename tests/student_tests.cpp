@@ -1,5 +1,3 @@
-// M4 tests for the background build (R1-R4).
-
 #define CATCH_CONFIG_RUNNER
 #include "catch.hpp"
 
@@ -12,17 +10,24 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QTemporaryDir>
-
 #include <stdexcept>
+#include <QFileInfo>
+#include <QListWidget>
+#include <QProcess>
+#include <QThread>
+#include <cstring>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <unistd.h>
 
 using namespace aiws;
 using namespace aiws::gui;
 
-// Counts how many times its slot gets called (stands in for the GUI in the R3 test).
+// Counts how many times its slot gets called (stands in for the GUI in the R3 test)
 class Counter : public QObject {
     Q_OBJECT
 public slots:
-    void hit() { ++calls; }
+    void hit() { calls++; }
 public:
     int calls = 0;
 };
@@ -46,12 +51,12 @@ static bool is_built(MainWindow& w) {
     return false;
 }
 
-// A build that always fails, for the R3 test.
+// A build that always fails, for the R3 test
 static std::unique_ptr<ProcessingCore> failing_build(const Workspace&) {
     throw std::runtime_error("boom");
 }
 
-// Keeps the event loop running until the build ends (accepted, or Build is clickable again).
+// Keeps the event loop running until the build ends (accepted, or Build is clickable again)
 static void wait_for_build(MainWindow& w) {
     QElapsedTimer t;
     t.start();
@@ -115,6 +120,65 @@ TEST_CASE("R4: closing mid-build doesn't hang") {
         t.start();
     }  // window closes here mid-build
     CHECK(t.elapsed() < 1000);
+}
+
+static int run_aiws_send(const QString& dir, const QString& socket_path, const QString& file) {
+    QProcess process;
+    process.setWorkingDirectory(dir);
+    process.start(AIWS_SEND_PATH, {"--socket", socket_path, "add", file});
+    process.waitForFinished(10000);
+    return process.exitCode();
+}
+
+TEST_CASE("E1+E2: aiws_send adds a document from an odd relative path") {
+    QTemporaryDir dir;
+    QString name = QString::fromUtf8("my file \xC3\xA9\nnew.txt"); // space, é, newline
+    make_file(dir, name);
+    MainWindow w;
+    REQUIRE(w.start_ipc_server(dir.filePath("s.sock")));
+
+    CHECK(run_aiws_send(dir.path(), dir.filePath("s.sock"), name) == 0);
+    QElapsedTimer t;
+    t.start();
+    while (t.elapsed() < 200) QApplication::processEvents(); // let the add reach the window
+    CHECK(w.findChild<QListWidget*>()->count() == 1);
+}
+
+TEST_CASE("E3: a request split into pieces still works") {
+    QTemporaryDir dir;
+    MainWindow w;
+    REQUIRE(w.start_ipc_server(dir.filePath("s.sock")));
+
+    // 'A', 4-byte big-endian length (path is under 256 bytes), path
+    QByteArray path = make_file(dir, "a.txt").toUtf8();
+    QByteArray request = QByteArray("A") + QByteArray(3, '\0') + char(path.size()) + path;
+
+    int fd = ::socket(AF_UNIX, SOCK_STREAM, 0);
+    sockaddr_un address{};
+    address.sun_family = AF_UNIX;
+    std::strcpy(address.sun_path, dir.filePath("s.sock").toUtf8().constData());
+    REQUIRE(::connect(fd, reinterpret_cast<sockaddr*>(&address), sizeof(address)) == 0);
+
+    ::write(fd, request.constData(), 3); // first piece
+    QThread::msleep(200); // pause
+    ::write(fd, request.constData() + 3, request.size() - 3); // the rest
+
+    char status = 9;
+    ::read(fd, &status, 1);
+    ::close(fd);
+    CHECK(status == 0); // accepted
+}
+
+TEST_CASE("E4: closing the app stops serving fast and removes the socket") {
+    QTemporaryDir dir;
+    QElapsedTimer t;
+    {
+        MainWindow w;
+        REQUIRE(w.start_ipc_server(dir.filePath("s.sock")));
+        t.start();
+    }  // window closes here
+    CHECK(t.elapsed() < 500);
+    CHECK_FALSE(QFileInfo::exists(dir.filePath("s.sock")));
 }
 
 int main(int argc, char* argv[]) {
