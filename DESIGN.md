@@ -9,3 +9,28 @@ Adding a document whilst a build is running will change the version, causing the
 The build thread creates a local ProcessingCore, and returns it by value to the future. In the check_build function on the GUI thread, it will be moved using get(). If valid it will be assigned to the processing_core_ using move semantics. This will destroy the old corpus. If it is invalid, it will be destroyed after the check_build function. If the application closes before this, it will be destroyed along with the future.
 ## 5. Rejected alternative
 I dismissed the option of returning the result from the build thread using QMetaObject::invokeMethod. This is because the build thread would require a pointer to the main window which may have been destroyed on exit. I would also still have to store and join the thread somewhere.
+
+
+### Pair Programming Log
+**Partner:** Katie Visintainer
+
+## Session 1
+**- Date:** Nov 6
+**- Tme:** 6:00 - 6:35
+**- Code:** Katie's
+**- Part worked on:** The CR-1 remote add feature, mainly setting up the IPC server and getting remote files added to the workspace.
+**- Role swap:** 6:17
+**- My contribution as navigator:** I helped work through the socket communication and how we should handle valid and invalid file requests.
+**- Katie's contribution as navigator:** Katie helped figure out how to send the remote add from the IPC thread back to the GUI without having the worker thread directly change anything in the GUI.
+
+## Session 1
+**- Date:** Nov 6
+**- Tme:** 7:00 - 7:35
+**- Code:** Mine
+**- Part worked on:** Testing the remote add feature and making sure aiws_send and the application communicated correctly.
+**- Role swap:** 7:20
+**- My contribution as navigator:** I suggested testing bad file paths and checking that the socket was cleaned up when the application closed.
+**- Katie's contribution as navigator:** Katie suggested testing a remote add while the corpus was still building to make sure the corpus would become out of date if the workspace changed.
+
+## What worked best
+Working in short cycles of writing a small piece of code and testing it immediately, which let us find and fix issues early instead of having them pile up later.
