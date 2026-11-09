@@ -6,3 +6,4 @@ text/
 include/
 Dockerfile
 README.md
+build-docker/
