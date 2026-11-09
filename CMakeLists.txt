@@ -14,7 +14,7 @@ set(CMAKE_AUTOMOC ON)
 
 add_library(aiws_m2
     # src/document.cpp
-    src/workspace.cpp
+    # src/workspace.cpp
     src/text_processor.cpp
     src/chunker.cpp
     src/corpus_index.cpp
@@ -31,7 +31,7 @@ add_library(aiws_app STATIC
     src/corpus_builder_worker.cpp
     src/ipc_server.cpp
     src/main_window.cpp
-    # src/workspace_widget.cpp
+    src/workspace_widget.cpp
     src/search_widget.cpp
     src/context_widget.cpp
     src/term_inspector_widget.cpp
@@ -39,7 +39,6 @@ add_library(aiws_app STATIC
     include/corpus_builder_worker.hpp
     include/ipc_server.hpp
     include/aiws/gui/main_window.hpp
-    include/aiws/gui/resettable.hpp
     include/aiws/gui/workspace_widget.hpp
     include/aiws/gui/search_widget.hpp
     include/aiws/gui/context_widget.hpp
