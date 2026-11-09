@@ -1,0 +1,75 @@
+commit 18ea1febf227828ce6b0279dcb814d54242f948b (HEAD -> main)
+Author: basliailw <basliail@vt.edu>
+Date:   2026-11-08 22:08:11 -0500
+
+    don't push build-docker/ files
+
+ .gitignore | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+commit ed40b691af92efd11b7cfd5c4bb8c4ddda7102eb
+Author: basliailw <basliail@vt.edu>
+Date:   2026-11-08 21:56:30 -0500
+
+    last minute touches
+
+ src/corpus_builder_worker.cpp | 20 +++++++-------------
+ src/main_window.cpp           |  2 +-
+ 2 files changed, 8 insertions(+), 14 deletions(-)
+
+commit aa3c980ed5954c83ed144479c40e5abacc6b51f4
+Author: basliailw <basliail@vt.edu>
+Date:   2026-11-08 21:14:03 -0500
+
+    forgot to add ipc_server files
+
+ include/ipc_server.hpp |  38 +++++++++++++++
+ src/ipc_server.cpp     | 122 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 160 insertions(+)
+
+commit 4b87a1d502880f1eb50ae37b50014bd585a588fd
+Author: basliailw <basliail@vt.edu>
+Date:   2026-11-07 14:06:40 -0500
+
+    forgot to add m4 pair log
+
+ DESIGN.md | 27 ++++++++++++++++++++++++++-
+ 1 file changed, 26 insertions(+), 1 deletion(-)
+
+commit ed5c0676aef8fccaff817bdc94064957a29dd2a5
+Author: basliailw <basliail@vt.edu>
+Date:   2026-11-07 13:47:33 -0500
+
+    build aiws_send, add E1-E4 tests, and worked with Katie yesterday for m4 pair objectives
+
+ CMakeLists.txt          |  6 ++++
+ tests/student_tests.cpp | 78 ++++++++++++++++++++++++++++++++++++++++++++-----
+ 2 files changed, 77 insertions(+), 7 deletions(-)
+
+commit 281632b388c1699a5fe41effa51f6b26ef516fc5
+Author: basliailw <basliail@vt.edu>
+Date:   2026-11-05 20:24:02 -0500
+
+    CR-1 socket server, --ipc-socket, and aiws_send
+
+ CMakeLists.txt      |   2 +
+ src/ipc_server.cpp  |   0
+ src/main.cpp        |  19 +++++++-
+ src/main_window.cpp |  12 +++++
+ tools/aiws_send.cpp | 135 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 5 files changed, 167 insertions(+), 1 deletion(-)
+
+commit 040b9ffba92ed0454eeca0f58cd9db11a03a82a2
+Author: basliailw <basliail@vt.edu>
+Date:   2026-11-02 17:38:35 -0500
+
+    stale build rejection, build delay option, fault switches, R1-R4 tests
+
+ CMakeLists.txt                |  39 ++++--
+ DESIGN.md                     |  33 ++---
+ DESIGN_NOTE.md                |  11 ++
+ src/corpus_builder_worker.cpp | 107 ++++++++++++++
+ src/main.cpp                  |  14 ++
+ src/main_window.cpp           |  83 +++++++++--
+ tests/student_tests.cpp       | 319 +++++++++++++-----------------------------
+ 7 files changed, 339 insertions(+), 267 deletions(-)
