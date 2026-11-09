@@ -263,7 +263,7 @@ void MainWindow::update_action_states() {
 
     bool building = build_worker_.is_running(); // m4 addition: no second build while one is running
 
-    workspace_widget_->set_build_corpus_enabled(has_documents && !corpus_current_);
+    workspace_widget_->set_build_corpus_enabled(has_documents && !corpus_current_ && !building);
     search_widget_->set_search_enabled(corpus_current_ && has_query);
     term_inspector_widget_->set_inspection_enabled(corpus_current_);
     context_widget_->set_build_context_enabled(corpus_current_ && has_query);

@@ -35,7 +35,6 @@ bool CorpusBuilderWorker::start(const Workspace& workspace, int delay_ms_per_doc
     result_.reset();
     error_.clear();
     succeeded_ = false;
-    cancelled_ = false;
 
     // thread gets its own copies of the workspace and slot name
     thread_ = std::thread(&CorpusBuilderWorker::run, this, workspace,
@@ -81,18 +80,13 @@ void CorpusBuilderWorker::run(Workspace snapshot, int delay_ms_per_document,
         }
     }
 
-    if (cancel_requested_) {
-        cancelled_ = true;  // when prompted to stop, skips the real build.
-    } else {
-        // If anything throws, save the message for the GUI.
-        try {
-            result_ = builder(snapshot);
-            succeeded_ = true;
-        } catch (const std::exception& e) {
-            error_ = e.what();
-        } catch (...) {
-            error_ = "Unknown error";
-        }
+    try {
+        result_ = builder(snapshot);
+        succeeded_ = true;
+    } catch (const std::exception& e) {
+        error_ = e.what();
+    } catch (...) {
+        error_ = "unknown error";
     }
 
 #ifdef AIWS_FAULT_LOSE_FAILURE // m4: fault switch (R3)
