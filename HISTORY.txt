@@ -1,4 +1,23 @@
-commit 18ea1febf227828ce6b0279dcb814d54242f948b (HEAD -> main)
+commit 13bfcfb049f2d0572e3d434c68476ddfe7581f6d (HEAD -> main)
+Author: basliailw <basliail@vt.edu>
+Date:   2026-11-08 23:42:28 -0500
+
+    Last minute touches pt 2
+
+ CMakeLists.txt                   |   2 +-
+ include/aiws/gui/main_window.hpp | 181 +++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 182 insertions(+), 1 deletion(-)
+
+commit 51566245e204657c4dedc4775a91bdb17e4f28ae (origin/main, origin/HEAD)
+Author: basliailw <basliail@vt.edu>
+Date:   2026-11-08 23:31:08 -0500
+
+    HISTORY.txt logs
+
+ HISTORY.txt | 75 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 75 insertions(+)
+
+commit 18ea1febf227828ce6b0279dcb814d54242f948b
 Author: basliailw <basliail@vt.edu>
 Date:   2026-11-08 22:08:11 -0500
 
