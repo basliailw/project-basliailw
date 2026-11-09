@@ -31,7 +31,7 @@ add_library(aiws_app STATIC
     src/corpus_builder_worker.cpp
     src/ipc_server.cpp
     src/main_window.cpp
-    src/workspace_widget.cpp
+    # src/workspace_widget.cpp
     src/search_widget.cpp
     src/context_widget.cpp
     src/term_inspector_widget.cpp
