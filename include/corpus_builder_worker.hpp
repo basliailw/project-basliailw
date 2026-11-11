@@ -6,7 +6,9 @@
 #include <QObject>
 
 #include <atomic>
+#include <condition_variable>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 
@@ -20,7 +22,7 @@ public:
 
     CorpusBuilderWorker() = default;
 
-    // tells any running build to stop, then waits for its thread to end
+    // calls shutdown()
     ~CorpusBuilderWorker();
 
     // one worker owns one thread, so copying makes no sense
@@ -31,34 +33,48 @@ public:
                QObject* receiver, const char* slot_name,
                BuildFunction builder = nullptr);
 
-    // true from start() until finish() has joined the thread
+    // true from start() until finish()
     bool is_running() const noexcept;
 
     // cancel()
     void cancel() noexcept;
 
-    // only call this once the thread has said it's done (from the slot), or on shutdown right after cancel()
+    // call from the slot once the build has said it's done
     void finish();
 
+    // m5: wakes the worker, tells it to stop, and joins it (exit)
+    void shutdown();
+
     // after finish():
-    // bool was_cancelled() const noexcept; // did we stop early?
-    bool succeeded() const noexcept; // did the build work?
-    const std::string& error() const noexcept; // what went wrong, if it failed?
+    bool succeeded() const; // did the build work?
+    std::string error() const; // what went wrong, if it failed?
     std::unique_ptr<ProcessingCore> take_result(); // hands over the new corpus (or nullptr)
 
 private:
-    // the actual build thread.
-    void run(Workspace snapshot, int delay_ms_per_document,
-             QObject* receiver, std::string slot_name, BuildFunction builder);
+    struct Request {
+        Workspace workspace;
+        int delay_ms_per_document{0};
+        QObject* receiver{nullptr};
+        std::string slot_name;
+        BuildFunction builder{nullptr};
+    };
+
+    void run();
 
     std::thread thread_;
+    bool busy_{false};
 
     std::atomic<bool> cancel_requested_{false};
 
+    mutable std::mutex mutex_;
+    std::condition_variable wake_;
+    Request request_;
+    bool has_request_{false};
+    bool stop_{false};
     std::unique_ptr<ProcessingCore> result_;
     std::string error_;
     bool succeeded_{false};
-    // bool cancelled_{false};
 };
 
-}  // namespace aiws::gui
+}  // namespace aiws::guils
+c

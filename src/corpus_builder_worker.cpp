@@ -18,33 +18,34 @@ std::unique_ptr<ProcessingCore> default_build(const Workspace& workspace) {
 }  // namespace
 
 CorpusBuilderWorker::~CorpusBuilderWorker() {
-    cancel();
-    finish();
+    shutdown();
 }
 
 bool CorpusBuilderWorker::start(const Workspace& workspace, int delay_ms_per_document,
                                 QObject* receiver, const char* slot_name, BuildFunction builder) {
-    if (thread_.joinable())
+    if (busy_)
         return false;
 
     if (builder == nullptr)
         builder = &default_build;
 
-    // clear out whatever the last build left behind.
-    cancel_requested_ = false;
-    result_.reset();
-    error_.clear();
-    succeeded_ = false;
+    // m5: the one worker thread is created on the first build and reused after that
+    if (!thread_.joinable())
+        thread_ = std::thread(&CorpusBuilderWorker::run, this);
 
-    // thread gets its own copies of the workspace and slot name
-    thread_ = std::thread(&CorpusBuilderWorker::run, this, workspace,
-                          delay_ms_per_document, receiver, std::string(slot_name),
-                          builder);
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        request_ = Request{workspace, delay_ms_per_document, receiver, std::string(slot_name), builder};
+        has_request_ = true;
+        cancel_requested_ = false;
+    }
+    wake_.notify_one();
+    busy_ = true;
     return true;
 }
 
 bool CorpusBuilderWorker::is_running() const noexcept {
-    return thread_.joinable();
+    return busy_;
 }
 
 void CorpusBuilderWorker::cancel() noexcept {
@@ -52,50 +53,75 @@ void CorpusBuilderWorker::cancel() noexcept {
 }
 
 void CorpusBuilderWorker::finish() {
-    if (thread_.joinable()) {
-        thread_.join();
-    }
+    busy_ = false;
 }
 
-bool CorpusBuilderWorker::succeeded() const noexcept {
+void CorpusBuilderWorker::shutdown() {
+    if (!thread_.joinable())
+        return;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        stop_ = true;
+        cancel_requested_ = true;
+    }
+    wake_.notify_one();
+    thread_.join();
+}
+
+bool CorpusBuilderWorker::succeeded() const {
+    std::lock_guard<std::mutex> lock(mutex_);
     return succeeded_;
 }
 
-const std::string& CorpusBuilderWorker::error() const noexcept {
+std::string CorpusBuilderWorker::error() const {
+    std::lock_guard<std::mutex> lock(mutex_);
     return error_;
 }
 
 std::unique_ptr<ProcessingCore> CorpusBuilderWorker::take_result() {
+    std::lock_guard<std::mutex> lock(mutex_);
     return std::move(result_);
 }
 
-void CorpusBuilderWorker::run(Workspace snapshot, int delay_ms_per_document,
-                              QObject* receiver, std::string slot_name,
-                              BuildFunction builder) {
-    // 10 ms chunks so a cancel (like hitting Exit) kicks in fast
-    const std::size_t document_count = snapshot.documents().size();
-    for (std::size_t i = 0; i < document_count && !cancel_requested_; ++i) {
-        for (int waited = 0; waited < delay_ms_per_document && !cancel_requested_; waited += 10) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+void CorpusBuilderWorker::run() {
+    std::unique_lock<std::mutex> lock(mutex_);
+    while (true) {
+        // m5: sleep on the condition variable until there's a request or it's time to stop
+        while (!has_request_ && !stop_)
+            wake_.wait(lock);
+        if (stop_)
+            return;
+
+        Request request = std::move(request_);
+        has_request_ = false;
+        lock.unlock();
+
+        // 10 ms chunks so a cancel (like hitting Exit) kicks in fast
+        const std::size_t document_count = request.workspace.documents().size();
+        for (std::size_t i = 0; i < document_count && !cancel_requested_; ++i) {
+            for (int waited = 0; waited < request.delay_ms_per_document && !cancel_requested_; waited += 10) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
         }
+
+        std::unique_ptr<ProcessingCore> core;
+        std::string error;
+        try {
+            core = request.builder(request.workspace);
+        } catch (const std::exception& e) {
+            error = e.what();
+        } catch (...) {
+            error = "unknown error";
+        }
+
+        lock.lock();
+        succeeded_ = (core != nullptr);
+        result_ = std::move(core);
+        error_ = error;
+
+        // tell gui we done. run the slot -> removes block
+        QMetaObject::invokeMethod(request.receiver, request.slot_name.c_str(), Qt::QueuedConnection);
     }
-
-    try {
-        result_ = builder(snapshot);
-        succeeded_ = true;
-    } catch (const std::exception& e) {
-        error_ = e.what();
-    } catch (...) {
-        error_ = "unknown error";
-    }
-
-#ifdef AIWS_FAULT_LOSE_FAILURE // m4: fault switch (R3)
-    if (!succeeded_) {
-        return;
-#endif
-
-    // tell gui we done. run the slot -> removes block
-    QMetaObject::invokeMethod(receiver, slot_name.c_str(), Qt::QueuedConnection);
 }
 
 }  // namespace aiws::gui

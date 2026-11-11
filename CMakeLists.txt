@@ -13,7 +13,7 @@ set(CMAKE_AUTOMOC ON)
 # Add your new M4 source files to the target where they belong.
 
 add_library(aiws_m2
-    # src/document.cpp
+    src/document.cpp
     src/workspace.cpp
     src/text_processor.cpp
     src/chunker.cpp

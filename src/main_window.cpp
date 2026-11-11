@@ -74,8 +74,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 
 // m4 addition: stop and join the build thread while MainWindow is still fully alive
 MainWindow::~MainWindow() {
-    build_worker_.cancel();
-    build_worker_.finish();
+    build_worker_.shutdown();
     ipc_server_.stop();
 }
 
@@ -147,7 +146,7 @@ void MainWindow::build_corpus() {
 
 // m4 addition: runs on the GUI thread (queued) once the build thread is done
 void MainWindow::build_finished() {
-    // thread  did its work and is only returning, so this join doesn't make the GUI wait on a build
+    // the worker is free for the next request
     build_worker_.finish();
 
     bool stale = (build_version_ != workspace_version_);
