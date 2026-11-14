@@ -36,7 +36,7 @@ public:
     // true from start() until finish()
     bool is_running() const noexcept;
 
-    // cancel()
+    // stops the running build right away; it never produces a result
     void cancel() noexcept;
 
     // call from the slot once the build has said it's done
@@ -76,5 +76,4 @@ private:
     bool succeeded_{false};
 };
 
-}  // namespace aiws::guils
-c
+}  // namespace aiws::gui

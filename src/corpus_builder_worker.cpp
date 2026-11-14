@@ -49,7 +49,11 @@ bool CorpusBuilderWorker::is_running() const noexcept {
 }
 
 void CorpusBuilderWorker::cancel() noexcept {
-    cancel_requested_ = true;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        cancel_requested_ = true;
+    }
+    wake_.notify_one();
 }
 
 void CorpusBuilderWorker::finish() {
@@ -94,27 +98,32 @@ void CorpusBuilderWorker::run() {
 
         Request request = std::move(request_);
         has_request_ = false;
-        lock.unlock();
 
-        // 10 ms chunks so a cancel (like hitting Exit) kicks in fast
+        // m5: each document's build time is a wait that cancel() can cut short
         const std::size_t document_count = request.workspace.documents().size();
         for (std::size_t i = 0; i < document_count && !cancel_requested_; ++i) {
-            for (int waited = 0; waited < request.delay_ms_per_document && !cancel_requested_; waited += 10) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            auto until = std::chrono::steady_clock::now() + std::chrono::milliseconds(request.delay_ms_per_document);
+            while (!cancel_requested_ && wake_.wait_until(lock, until) == std::cv_status::no_timeout) {
             }
         }
+        bool cancelled = cancel_requested_;
+        lock.unlock();
 
         std::unique_ptr<ProcessingCore> core;
         std::string error;
-        try {
-            core = request.builder(request.workspace);
-        } catch (const std::exception& e) {
-            error = e.what();
-        } catch (...) {
-            error = "unknown error";
+        if (!cancelled) {
+            try {
+                core = request.builder(request.workspace);
+            } catch (const std::exception& e) {
+                error = e.what();
+            } catch (...) {
+                error = "unknown error";
+            }
         }
 
         lock.lock();
+        if (stop_)
+            return;
         succeeded_ = (core != nullptr);
         result_ = std::move(core);
         error_ = error;
