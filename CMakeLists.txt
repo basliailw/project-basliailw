@@ -13,7 +13,7 @@ set(CMAKE_AUTOMOC ON)
 # Add your new M4 source files to the target where they belong.
 
 add_library(aiws_m2
-    src/document.cpp
+    # src/document.cpp
     src/workspace.cpp
     src/text_processor.cpp
     src/chunker.cpp
@@ -29,6 +29,7 @@ target_compile_options(aiws_m2 PRIVATE -Wall -Wextra -Wpedantic)
 # Everything except main(), so tests can link the application code.
 add_library(aiws_app STATIC
     src/corpus_builder_worker.cpp
+    src/corpus_state.cpp
     src/ipc_server.cpp
     src/main_window.cpp
     src/workspace_widget.cpp
@@ -37,6 +38,7 @@ add_library(aiws_app STATIC
     src/term_inspector_widget.cpp
     src/search_result_model.cpp
     include/corpus_builder_worker.hpp
+    include/corpus_state.hpp
     include/ipc_server.hpp
     include/aiws/gui/main_window.hpp
     include/aiws/gui/workspace_widget.hpp

@@ -7,6 +7,8 @@
 #include "corpus_builder_worker.hpp"
 #include "ipc_server.hpp"
 
+#include <memory>
+
 class QLabel;
 class QPushButton;
 class QString;
@@ -15,6 +17,7 @@ class QWidget;
 namespace aiws::gui {
 
 class ContextWidget;
+class CorpusState;
 class SearchWidget;
 class TermInspectorWidget;
 class WorkspaceWidget;
@@ -28,6 +31,9 @@ class WorkspaceWidget;
  */
 class MainWindow final : public QMainWindow {
     Q_OBJECT
+
+    friend class NotBuiltState;
+    friend class BuildingState;
 
 public:
     /**
@@ -149,19 +155,20 @@ private:
      */
     void clear_processing_outputs();
 
+    // m5: actions the states call, and the one place the state changes
+    void start_build();
+    void cancel_build();
+    void install_result();
+    void show_build_failed();
+    void change_state(std::unique_ptr<CorpusState> next);
+
     Workspace workspace_;
     ProcessingCore processing_core_;
-    bool corpus_current_{false};
+    std::unique_ptr<CorpusState> state_;
     ExitCallback exit_callback_{nullptr};
 
     // new m4 addition: extra time in ms each document adds to a build (from --build-delay-ms, default = 0)
     int build_delay_ms_{0};
-
-    // new m4 addition: goes up one ever "Add" and "Reset" (GUI thread)
-    int workspace_version_{0};
-
-    // new m4 addition: workspace_version_ (GUI thread)
-    int build_version_{0};
 
     /// Runs builds on a background std::thread
     CorpusBuilderWorker build_worker_;
