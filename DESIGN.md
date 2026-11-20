@@ -1,36 +1,29 @@
-# M4 Design Note
-## 1. Components and Threads
-All of the main window, widgets, workspace, and current processing core live on the GUI thread. The Build Corpus copies the documents and launches the free function run_build with std::async which means it will be run on a separate build thread. This returns a new Processing Core in a std::future. The MainWindow contains a single BuildJob (std::unique_ptr), which contains this future, an atomic cancel variable and the version number of the workspace prior to the build. A QTimer on the GUI thread triggers the slot check_build. This uses wait_for(0) which will only call get() if the future is ready. This means there will be no blocking on the GUI thread. The only variable that can be modified or read by both threads is the cancel variable. This is written to by the GUI thread, and read from by the build thread between documents. As this is a std::atomic it will be safe.
-## 2. Corpus States and Events
-The corpus has four states: NotBuilt, Building, Current or OutOfDate. Only Current will allow searching, term inspector and context. The workspace_version_ is stored in the GUI thread. This increments every time a document is added or the reset button is clicked. Clicking build sets the state to Building. On completion, if the version number is the same as the one stored, the corpus will be set to Current. Otherwise the results will be discarded and it will be set to OutOfDate. If a build fails (get() throws), it will show an error and return to the NotBuilt state. Adding a document will set the cancel flag and set the corpus to OutOfDate. Resetting will set the cancel flag and return it to NotBuilt. Changing inputs will only affect button states. Whilst a build is running, the build button will be disabled meaning you cannot click it twice.
-## 3. Threatening event sequences
-Adding a document whilst a build is running will change the version, causing the result to be invalid. The cancel flag will be set causing the build to stop early. If a build fails, an error will be shown and the application will still be usable. Leaving the application whilst a build is running will set the cancel flag. The future will then join the thread after roughly one document's worth of time. Multiple builds cannot stack as there is only ever one job. For example: If the build starts at version 4 and the user adds a document, the version will be 5. This will cause the build to stop at the next check. check_build sees 4 != 5, deletes the result, and enables Build again. If the user leaves whilst a build is running, the ~BuildJob will set the cancel flag. However, the future destructor will only wait for the thread to return. Nothing will hang and no threads are detached.
-## 4. Ownership of one corpus
-The build thread creates a local ProcessingCore, and returns it by value to the future. In the check_build function on the GUI thread, it will be moved using get(). If valid it will be assigned to the processing_core_ using move semantics. This will destroy the old corpus. If it is invalid, it will be destroyed after the check_build function. If the application closes before this, it will be destroyed along with the future.
-## 5. Rejected alternative
-I dismissed the option of returning the result from the build thread using QMetaObject::invokeMethod. This is because the build thread would require a pointer to the main window which may have been destroyed on exit. I would also still have to store and join the thread somewhere.
+# M5 Design
 
+## 1. M4 fixes
+The AIWS_FAULT_LOSE_FAILURE block in CorpusBuilderWorker::run() was missing a }, so the faulted build did not compile. That M4 fault is removed. The E3 test now checks the return values of ::write and ::read. M4's DESIGN.md did not declare the worker's result data or the IPC thread; both are declared below.
 
-### Pair Programming Log
-**Partner:** Katie Visintainer
+## 2. Threads and shared data
+The main GUI thread runs MainWindow, state objects and widgets. The build thread is created once building has been initiated. It runs CorpusBuilderWorker::run(), and is joined when shutdown() is called. The IPC thread runs IpcServer::run() and is joined when IpcServer::stop() is called. The main GUI thread sets the request_, has_request_ and stop_ members. The build thread sets the result_, error_ and succeeded_ members. All of these 6 members are protected with mutex_. The build thread waits on wake_ until a request or stop is made. The cancel_requested_ member (set by main GUI thread, read by build thread) and IpcServer::stop_requested_ (set by main GUI thread, read by IPC thread) are std::atomics. busy_ and state_ are only accessed by the GUI thread. The build thread creates its own Workspace.
 
-## Session 1
-**- Date:** Nov 6
-**- Tme:** 6:00 - 6:35
-**- Code:** Katie's
-**- Part worked on:** The CR-1 remote add feature, mainly setting up the IPC server and getting remote files added to the workspace.
-**- Role swap:** 6:17
-**- My contribution as navigator:** I helped work through the socket communication and how we should handle valid and invalid file requests.
-**- Katie's contribution as navigator:** Katie helped figure out how to send the remote add from the IPC thread back to the GUI without having the worker thread directly change anything in the GUI.
+## 3. States
+| State           | Meaning                 | Build requested | Workspace changed   | Build succeeded | Build failed |
+|-----------------|-------------------------|-----------------|---------------------|-----------------|--------------|
+| NotBuiltState   | no current corpus       | → Building      | stay                | —               | —            |
+| BuildingState   | wanted build running    | —               | cancel → Cancelling | → Current       | → NotBuilt   |
+| CancellingState | unwanted build stopping | —               | stay                | → NotBuilt      | → NotBuilt   |
+| CurrentState    | corpus is current       | —               | → NotBuilt          | —               | —            |
 
-## Session 1
-**- Date:** Nov 6
-**- Tme:** 7:00 - 7:35
-**- Code:** Mine
-**- Part worked on:** Testing the remote add feature and making sure aiws_send and the application communicated correctly.
-**- Role swap:** 7:20
-**- My contribution as navigator:** I suggested testing bad file paths and checking that the socket was cleaned up when the application closed.
-**- Katie's contribution as navigator:** Katie suggested testing a remote add while the corpus was still building to make sure the corpus would become out of date if the workspace changed.
+Add, remote add and Reset all send "workspace changed". Each event returns the next state, which MainWindow::change_state() installs.
 
-## What worked best
-Working in short cycles of writing a small piece of code and testing it immediately, which let us find and fix issues early instead of having them pile up later.
+## 4. Event sequence: Reset during a long build
+GUI calls build_corpus() which causes NotBuiltState::build_requested() to be called. This causes start_build() to be called. CorpusBuilderWorker::start() sets request_, and calls notify_one(). State changes to Building. Worker is notified, receives request, and waits in wait_until() until the first document is available. User presses Reset. reset_application() causes BuildingState::workspace_changed() to be called. This calls cancel_build(), causing cancel_requested_ to be set, and notifies. State changes to Cancelling. The worker is notified early, does not call rebuild(), but calls build_finished. In the GUI, build_finished() calls finish() and CancellingState::build_failed(). build_failed() returns NotBuilt, so the Build button is almost immediately re-enabled.
+
+## 5. Decisions
+Building during a build is not allowed: only NotBuiltState::can_build() returns true. A remote add mid-build goes through remote_add_requested() and add_document_file(), so BuildingState::workspace_changed() cancels the build; the user sees "Not built" and can rebuild right away. The smallest shared data is the request, the result, and the stop and cancel flags, because the GUI must hand over work, receive a result, and be able to stop the worker.
+
+## 6. Fault switches
+AIWS_FAULT_NO_CANCEL makes CorpusBuilderWorker::cancel() return without cancelling; "M5 R3: Reset mid-build stops the useless build quickly" catches it. AIWS_FAULT_SILENT_SHUTDOWN makes CorpusBuilderWorker::shutdown() skip notify_one(), so an idle worker never wakes; "M5 R4: exit with an idle worker is fast" hangs and the 30 s CTest timeout fails it.
+
+## 7. AI-use disclosure
+When searching Google for syntax questions (looking for forums like Stack Overflow), Google's automatic AI Overview provided certain syntax explanations and examples. I did not prompt a standalone AI chatbot.

@@ -159,12 +159,12 @@ TEST_CASE("E3: a request split into pieces still works") {
     std::strcpy(address.sun_path, dir.filePath("s.sock").toUtf8().constData());
     REQUIRE(::connect(fd, reinterpret_cast<sockaddr*>(&address), sizeof(address)) == 0);
 
-    ::write(fd, request.constData(), 3); // first piece
+    REQUIRE(::write(fd, request.constData(), 3) == 3); // first piece
     QThread::msleep(200); // pause
-    ::write(fd, request.constData() + 3, request.size() - 3); // the rest
+    REQUIRE(::write(fd, request.constData() + 3, request.size() - 3) == request.size() - 3); // the rest
 
     char status = 9;
-    ::read(fd, &status, 1);
+    REQUIRE(::read(fd, &status, 1) == 1);
     ::close(fd);
     CHECK(status == 0); // accepted
 }
@@ -179,6 +179,38 @@ TEST_CASE("E4: closing the app stops serving fast and removes the socket") {
     }  // window closes here
     CHECK(t.elapsed() < 500);
     CHECK_FALSE(QFileInfo::exists(dir.filePath("s.sock")));
+}
+
+// m5
+
+TEST_CASE("M5 R3: Reset mid-build stops the useless build quickly") {
+    QTemporaryDir dir;
+    MainWindow w;
+    w.set_build_delay_ms(2000);
+    w.add_document_file(make_file(dir, "a.txt"));
+    button(w, "Build Corpus")->click();
+
+    QElapsedTimer t;
+    t.start();
+    button(w, "Reset")->click();
+    w.add_document_file(make_file(dir, "b.txt"));
+    while (t.elapsed() < 5000 && !button(w, "Build Corpus")->isEnabled())
+        QApplication::processEvents();
+    CHECK(t.elapsed() < 1000); // did not wait for the 2 s build
+}
+
+TEST_CASE("M5 R4: exit with an idle worker is fast") {
+    QTemporaryDir dir;
+    QElapsedTimer t;
+    {
+        MainWindow w;
+        w.add_document_file(make_file(dir, "a.txt"));
+        button(w, "Build Corpus")->click();
+        wait_for_build(w);
+        REQUIRE(is_built(w)); // the worker exists and is waiting for work
+        t.start();
+    }
+    CHECK(t.elapsed() < 500);
 }
 
 int main(int argc, char* argv[]) {

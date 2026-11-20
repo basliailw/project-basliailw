@@ -49,6 +49,9 @@ bool CorpusBuilderWorker::is_running() const noexcept {
 }
 
 void CorpusBuilderWorker::cancel() noexcept {
+#ifdef AIWS_FAULT_NO_CANCEL
+    return; // fault: the useless build runs to the end
+#endif
     {
         std::lock_guard<std::mutex> lock(mutex_);
         cancel_requested_ = true;
@@ -68,7 +71,9 @@ void CorpusBuilderWorker::shutdown() {
         stop_ = true;
         cancel_requested_ = true;
     }
-    wake_.notify_one();
+#ifndef AIWS_FAULT_SILENT_SHUTDOWN
+    wake_.notify_one(); // fault: without this, an idle worker never wakes and exit hangs
+#endif
     thread_.join();
 }
 
