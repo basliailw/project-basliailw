@@ -13,6 +13,7 @@ public:
 
     virtual std::unique_ptr<CorpusState> build_requested(MainWindow& window);
     virtual std::unique_ptr<CorpusState> workspace_changed(MainWindow& window);
+    virtual std::unique_ptr<CorpusState> reset(MainWindow& window);
     virtual std::unique_ptr<CorpusState> build_succeeded(MainWindow& window);
     virtual std::unique_ptr<CorpusState> build_failed(MainWindow& window);
 
@@ -35,6 +36,15 @@ public:
 
 class CancellingState : public CorpusState {
 public:
+    std::unique_ptr<CorpusState> build_requested(MainWindow& window) override;
+    std::unique_ptr<CorpusState> build_succeeded(MainWindow& window) override;
+    std::unique_ptr<CorpusState> build_failed(MainWindow& window) override;
+    bool can_build() const override;
+};
+
+class RebuildQueuedState : public CorpusState {
+public:
+    std::unique_ptr<CorpusState> reset(MainWindow& window) override;
     std::unique_ptr<CorpusState> build_succeeded(MainWindow& window) override;
     std::unique_ptr<CorpusState> build_failed(MainWindow& window) override;
 };

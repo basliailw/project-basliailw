@@ -243,7 +243,7 @@ void MainWindow::reset_application() {
     Resettable* parts[] = {workspace_widget_, search_widget_, term_inspector_widget_, context_widget_};
     for (Resettable* part : parts) part->reset();
     status_label_->setText("Current status: Application reset.");
-    change_state(state_->workspace_changed(*this));
+    change_state(state_->reset(*this));
 }
  
 void MainWindow::exit_application() {

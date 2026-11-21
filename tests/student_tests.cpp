@@ -181,7 +181,7 @@ TEST_CASE("E4: closing the app stops serving fast and removes the socket") {
     CHECK_FALSE(QFileInfo::exists(dir.filePath("s.sock")));
 }
 
-// m5
+// ---------- m5 ----------
 
 TEST_CASE("M5 R3: Reset mid-build stops the useless build quickly") {
     QTemporaryDir dir;
@@ -194,9 +194,12 @@ TEST_CASE("M5 R3: Reset mid-build stops the useless build quickly") {
     t.start();
     button(w, "Reset")->click();
     w.add_document_file(make_file(dir, "b.txt"));
-    while (t.elapsed() < 5000 && !button(w, "Build Corpus")->isEnabled())
+    w.set_build_delay_ms(0);
+    button(w, "Build Corpus")->click();
+    while (t.elapsed() < 5000 && !is_built(w))
         QApplication::processEvents();
-    CHECK(t.elapsed() < 1000); // did not wait for the 2 s build
+    CHECK(is_built(w));
+    CHECK(t.elapsed() < 1000); // the rebuild did not wait for the 2 s build
 }
 
 TEST_CASE("M5 R4: exit with an idle worker is fast") {

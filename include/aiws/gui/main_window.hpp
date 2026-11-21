@@ -34,6 +34,7 @@ class MainWindow final : public QMainWindow {
 
     friend class NotBuiltState;
     friend class BuildingState;
+    friend class RebuildQueuedState;
 
 public:
     /**
