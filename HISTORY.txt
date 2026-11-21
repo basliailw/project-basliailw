@@ -1,4 +1,128 @@
-commit 13bfcfb049f2d0572e3d434c68476ddfe7581f6d (HEAD -> main)
+commit 5064efb9a739c9c9151a76bdc034003f080607e4 (HEAD -> main, origin/main, origin/HEAD)
+Author: basliailw <basliail@vt.edu>
+Date:   2026-11-20 18:23:37 -0500
+
+    added video link
+
+ VIDEO.md | 1 +
+ 1 file changed, 1 insertion(+)
+
+commit 0bbb01f83c2534a6000fa333f17fa23cbd2d7fa6
+Author: basliailw <basliail@vt.edu>
+Date:   2026-11-20 16:47:11 -0500
+
+    tests, fault switches, DESIGN.md
+
+ CMakeLists.txt                | 12 ++++----
+ DESIGN.md                     | 65 +++++++++++++++++++------------------------
+ src/corpus_builder_worker.cpp |  7 ++++-
+ tests/student_tests.cpp       | 38 +++++++++++++++++++++++--
+ 4 files changed, 76 insertions(+), 46 deletions(-)
+
+commit 4a7222ed8f88c8d4c7d6d21419defbae3822dfd1
+Author: basliailw <basliail@vt.edu>
+Date:   2026-11-17 19:43:44 -0500
+
+    corpus lifecycle as state pattern
+
+ CMakeLists.txt                   |  4 +-
+ include/aiws/gui/main_window.hpp | 23 +++++++----
+ include/corpus_state.hpp         | 48 +++++++++++++++++++++++
+ src/corpus_state.cpp             | 45 ++++++++++++++++++++++
+ src/main_window.cpp              | 83 +++++++++++++++++++---------------------
+ 5 files changed, 150 insertions(+), 53 deletions(-)
+
+commit 7d7f84b8d4fb09b5b9e8233b71ae4ea3ffb475a9
+Author: basliailw <basliail@vt.edu>
+Date:   2026-11-13 20:29:16 -0500
+
+    cancel useless build early
+
+ include/corpus_builder_worker.hpp |  5 ++---
+ src/corpus_builder_worker.cpp     | 31 ++++++++++++++++++++-----------
+ 2 files changed, 22 insertions(+), 14 deletions(-)
+
+commit 280fbc05974c5265b3d6185cbb0639a54a083f3e
+Author: basliailw <basliail@vt.edu>
+Date:   2026-11-11 18:36:02 -0500
+
+    persistent build worker with condition_variable
+
+ CMakeLists.txt                    |   4 +-
+ include/corpus_builder_worker.hpp |  38 ++++++++++----
+ src/corpus_builder_worker.cpp     | 106 ++++++++++++++++++++++++--------------
+ src/main_window.cpp               |   7 ++-
+ 4 files changed, 98 insertions(+), 57 deletions(-)
+
+commit c000a2b13ddbb07971b73c7467c9a17a318c17f8
+Author: basliailw <basliail@vt.edu>
+Date:   2026-11-08 23:59:18 -0500
+
+    j
+
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+commit e904c0fc1eaad3bbbe019fd973a21ab1239f1040
+Author: basliailw <basliail@vt.edu>
+Date:   2026-11-08 23:57:18 -0500
+
+    Used .zip for M3 so I didn't have to deal with .gitignore errors
+
+ CMakeLists.txt | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+commit 8519ad72b516d512b7fc1fe7b0d2b47f96390075
+Author: basliailw <basliail@vt.edu>
+Date:   2026-11-08 23:52:58 -0500
+
+    Used .zip for M3 so I didn't have to deal with CMake logic errors
+
+ include/aiws/gui/context_widget.hpp        |  75 +++++++++++++++++++++
+ include/aiws/gui/resettable.hpp            |  22 ++++++
+ include/aiws/gui/search_result_model.hpp   |  84 +++++++++++++++++++++++
+ include/aiws/gui/search_widget.hpp         | 105 +++++++++++++++++++++++++++++
+ include/aiws/gui/term_inspector_widget.hpp |  81 ++++++++++++++++++++++
+ include/aiws/gui/workspace_widget.hpp      | 101 +++++++++++++++++++++++++++
+ 6 files changed, 468 insertions(+)
+
+commit 1aaa8fcfd8956b554f19e1abf4a0eb8b0ac03422
+Author: basliailw <basliail@vt.edu>
+Date:   2026-11-08 23:50:32 -0500
+
+    commented out M1/M2 files
+
+ CMakeLists.txt | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+commit 3017178e21368791ac8fe4b36a8b03fbe369a41f
+Author: basliailw <basliail@vt.edu>
+Date:   2026-11-08 23:48:13 -0500
+
+    commented out M1/M2 files
+
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+commit 814fbab80174fcea50d896a9ef55e2aa11bc29ea
+Author: basliailw <basliail@vt.edu>
+Date:   2026-11-08 23:47:29 -0500
+
+    forgot to add (.gitignore ignores include/)
+
+ include/corpus_builder_worker.hpp | 64 +++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 64 insertions(+)
+
+commit 2b4abb533930697b1e10099bb7aeec005481e6b1
+Author: basliailw <basliail@vt.edu>
+Date:   2026-11-08 23:43:41 -0500
+
+    New HISTORY.txt file
+
+ HISTORY.txt | 21 ++++++++++++++++++++-
+ 1 file changed, 20 insertions(+), 1 deletion(-)
+
+commit 13bfcfb049f2d0572e3d434c68476ddfe7581f6d
 Author: basliailw <basliail@vt.edu>
 Date:   2026-11-08 23:42:28 -0500
 
@@ -8,7 +132,7 @@ Date:   2026-11-08 23:42:28 -0500
  include/aiws/gui/main_window.hpp | 181 +++++++++++++++++++++++++++++++++++++++
  2 files changed, 182 insertions(+), 1 deletion(-)
 
-commit 51566245e204657c4dedc4775a91bdb17e4f28ae (origin/main, origin/HEAD)
+commit 51566245e204657c4dedc4775a91bdb17e4f28ae
 Author: basliailw <basliail@vt.edu>
 Date:   2026-11-08 23:31:08 -0500
 
@@ -92,3 +216,183 @@ Date:   2026-11-02 17:38:35 -0500
  src/main_window.cpp           |  83 +++++++++--
  tests/student_tests.cpp       | 319 +++++++++++++-----------------------------
  7 files changed, 339 insertions(+), 267 deletions(-)
+
+commit 8f6a0d7197e1ca692f77eb5abe191a27a176434f
+Author: basliailw <basliail@vt.edu>
+Date:   2026-10-24 23:46:29 -0400
+
+    M3: First Submission
+
+ CMakeLists.txt                      |  39 ++++---
+ include/aiws/chunker.hpp            |   5 +-
+ include/aiws/chunking_strategy.hpp  |   7 --
+ include/aiws/context_builder.hpp    |   6 +-
+ include/aiws/context_strategy.hpp   |   7 --
+ include/aiws/processing_core.hpp    |  10 +-
+ include/aiws/retrieval_engine.hpp   |   7 +-
+ include/aiws/retrieval_strategy.hpp |   7 --
+ src/Document.cpp                    |   2 +-
+ src/Prompt.cpp                      |  43 --------
+ src/Workspace.cpp                   |   2 +-
+ src/chunker.cpp                     |   2 +-
+ src/context_builder.cpp             |   2 +-
+ src/context_widget.cpp              |  96 +++++++++++++++++
+ src/main.cpp                        |  26 ++++-
+ src/main_window.cpp                 | 208 ++++++++++++++++++++++++++++++++++++
+ src/processing_core.cpp             |  12 ++-
+ src/retrieval_engine.cpp            |   3 +-
+ src/search_result_model.cpp         |  74 +++++++++++++
+ src/search_widget.cpp               | 141 ++++++++++++++++++++++++
+ src/term_inspector_widget.cpp       |  84 +++++++++++++++
+ src/text_processor.cpp              |   2 +-
+ src/workspace_widget.cpp            |  99 +++++++++++++++++
+ 23 files changed, 771 insertions(+), 113 deletions(-)
+
+commit 0a62362210e049379a6d88614fb69d8c1c558d2c
+Author: basliailw <basliail@vt.edu>
+Date:   2026-10-02 19:01:40 -0400
+
+    Pushing include/ folder
+
+ include/Document.hpp                | 39 +++++++++++++++++++++++++
+ include/Message.hpp                 | 37 ++++++++++++++++++++++++
+ include/Prompt.hpp                  | 31 ++++++++++++++++++++
+ include/Workspace.hpp               | 51 +++++++++++++++++++++++++++++++++
+ include/aiws/chunker.hpp            | 28 ++++++++++++++++++
+ include/aiws/chunking_strategy.hpp  | 25 ++++++++++++++++
+ include/aiws/context_builder.hpp    | 17 +++++++++++
+ include/aiws/context_strategy.hpp   | 24 ++++++++++++++++
+ include/aiws/corpus_index.hpp       | 36 +++++++++++++++++++++++
+ include/aiws/document.hpp           | 22 ++++++++++++++
+ include/aiws/processing_core.hpp    | 57 +++++++++++++++++++++++++++++++++++++
+ include/aiws/processing_types.hpp   | 38 +++++++++++++++++++++++++
+ include/aiws/retrieval_engine.hpp   | 23 +++++++++++++++
+ include/aiws/retrieval_strategy.hpp | 27 ++++++++++++++++++
+ include/aiws/text_processor.hpp     | 29 +++++++++++++++++++
+ include/aiws/workspace.hpp          | 19 +++++++++++++
+ 16 files changed, 503 insertions(+)
+
+commit a7f7f46058a68d48b765830096d1a7b377de87e6
+Author: basliailw <basliail@vt.edu>
+Date:   2026-10-02 18:53:45 -0400
+
+    small tweaks before first submission
+
+ src/Message.cpp => Message.cpp | 2 +-
+ tests/student_tests.cpp        | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+commit b847b45cb1babaaf8806faa3296e07fd60b14802
+Author: basliailw <basliail@vt.edu>
+Date:   2026-10-02 18:50:38 -0400
+
+    M2: First draft
+
+ .DS_Store                              | Bin 6148 -> 0 bytes
+ CMakeLists.txt                         |  25 ++++++-----
+ DESIGN.md                              |  79 +++++++++------------------------
+ data/.DS_Store                         | Bin 6148 -> 0 bytes
+ src/corpus_index.cpp                   |   2 +-
+ src/processing_core.cpp                |  38 ++++++++++++----
+ tests/{tests.cpp => student_tests.cpp} |  67 +++++++++++++++++++++++++++-
+ 7 files changed, 131 insertions(+), 80 deletions(-)
+
+commit 8a3e9a4af95ff1e8296ef656bb4250accbd99bf3
+Author: basliailw <basliail@vt.edu>
+Date:   2026-09-20 22:06:15 -0400
+
+    M1: tests and DESIGN.md complete
+
+ CMakeLists.txt          |     6 +
+ DESIGN.md               |    39 +
+ src/processing_core.cpp |     4 +-
+ src/text_processor.cpp  |     2 +-
+ tests/catch.hpp         | 17976 ++++++++++++++++++++++++++++++++++++++++++++++
+ tests/tests.cpp         |   191 +
+ 6 files changed, 18215 insertions(+), 3 deletions(-)
+
+commit 1be0514160d7fc76c5b83e38ef8ea440551dd312
+Author: basliailw <basliail@vt.edu>
+Date:   2026-09-20 11:55:28 -0400
+
+    Temporary: src/ implementations
+
+ .DS_Store                     | Bin 0 -> 6148 bytes
+ .gitignore                    |   8 +++
+ CMakeLists.txt                |  26 +++++++++
+ DESIGN.md                     |  28 +++++-----
+ data/.DS_Store                | Bin 0 -> 6148 bytes
+ data/public/doc_ai.txt        |   3 ++
+ data/public/doc_retrieval.txt |   3 ++
+ data/public/doc_systems.txt   |   3 ++
+ data/public/queries.txt       |   4 ++
+ src/Document.cpp              |  74 ++++----------------------
+ src/Workspace.cpp             |  90 ++++---------------------------
+ src/chunker.cpp               |  63 ++++++++++++++++++++++
+ src/context_builder.cpp       |  48 +++++++++++++++++
+ src/corpus_index.cpp          |  82 ++++++++++++++++++++++++++++
+ src/processing_core.cpp       | 102 +++++++++++++++++++++++++++++++++++
+ src/retrieval_engine.cpp      |  96 +++++++++++++++++++++++++++++++++
+ src/text_processor.cpp        | 121 ++++++++++++++++++++++++++++++++++++++++++
+ tests/public_tests.cpp        |  69 ++++++++++++++++++++++++
+ 18 files changed, 659 insertions(+), 161 deletions(-)
+
+commit 47ac3f96179bc20c370d981f8b7bd5b3eedb3a5c
+Merge: 55237ac 7e1d975
+Author: basliailw <basliail@vt.edu>
+Date:   2026-09-03 23:17:53 -0400
+
+    Merge branch 'main' of https://github.com/basliailw/project-basliailw
+
+commit 55237ac2e32704c054fed9efb0fd2e3c8116414c
+Author: basliailw <basliail@vt.edu>
+Date:   2026-09-03 23:17:02 -0400
+
+    M0 - Third Submission
+
+ README.md        | 1 -
+ src/Document.cpp | 4 ++++
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+
+commit 7e1d975325823d056ac9007dc4b6f8be1f4db564
+Author: basliailw <basliail@vt.edu>
+Date:   2026-09-03 23:06:22 -0400
+
+    Delete README.md
+
+ README.md | 1 -
+ 1 file changed, 1 deletion(-)
+
+commit 3113f3f5dda7a010dc3faee1e5c7f2ec5a0d2475
+Author: basliailw <basliail@vt.edu>
+Date:   2026-09-03 23:03:03 -0400
+
+    M0 - Second Submission
+
+ src/Document.cpp        |  5 +++--
+ tests/testworkspace.cpp | 11 ++++++++---
+ 2 files changed, 11 insertions(+), 5 deletions(-)
+
+commit 17cfc35243e72178f56649d6a41b732cb3532647 (tag: mylabel)
+Author: basliailw <basliail@vt.edu>
+Date:   2026-09-03 22:47:28 -0400
+
+    First Submission
+
+ DESIGN.md               |  22 +++++++++
+ src/Document.cpp        |  65 ++++++++++++++++++++++++++
+ src/Message.cpp         |  43 +++++++++++++++++
+ src/Prompt.cpp          |  43 +++++++++++++++++
+ src/Workspace.cpp       |  89 ++++++++++++++++++++++++++++++++++++
+ src/main.cpp            |   7 +++
+ tests/testworkspace.cpp | 119 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 7 files changed, 388 insertions(+)
+
+commit 82abdd7052228b3d5452a9ce3a0cb7923df1fdcf
+Author: basliailw <basliail@vt.edu>
+Date:   2026-09-03 11:07:18 -0400
+
+    Initial commit
+
+ README.md | 1 +
+ 1 file changed, 1 insertion(+)
